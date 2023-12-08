@@ -9,7 +9,7 @@ start = Router()
 
 @start.message(CommandStart())
 async def start_handler(msg: types.Message, state: FSMContext):
-    await state.set_state(states.Register.start)
+    await state.set_state(states.MainMenu.main_menu)
     text = ("Hurmatli foydalanuvchi ism familiyangizni quyidagi ko'rinishda kiriting 👇👇👇\n"
             "Ism Familiya\n\n"
             "Misol:\n"
