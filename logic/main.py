@@ -16,6 +16,6 @@ async def main_menu_handler(msg: types.Message, state: FSMContext):
             'last_name': strings[1]
         }
         await state.update_data(data)
-        await state.set_state(states.MainMenu.main_menu)
+        await msg.answer(f"{await state.get_data()}")
     else:
         await start_handler(msg, state)
