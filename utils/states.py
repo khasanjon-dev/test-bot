@@ -7,3 +7,4 @@ class Register(StatesGroup):
 
 class MainMenu(StatesGroup):
     main_menu = State()
+    create_test = State()
