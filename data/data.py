@@ -5,6 +5,7 @@ main_menu = {
     "🔰 Mening ma'lumotlarim": 'about_me'
 }
 create_test_menu = {
-    '📔 Fan testi': 'science_test',
-    '📚 Blok testi': 'block_test',
+    '📔 Fan': 'science',
+    '📚 Blok': 'block',
+    '🔙 Orqaga': 'back'
 }
