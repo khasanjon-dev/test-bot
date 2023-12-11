@@ -35,8 +35,6 @@ async def create_test_menu_handler(call: CallbackQuery, state: FSMContext):
     )
 
 
-# @create_test.callback_query(BackMenuCallback.filter(F.choice =='back'))
-
 @create_test.callback_query(CreateTestCallback.filter(F.choice == 'back'))
 async def back_menu_handler(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
