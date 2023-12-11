@@ -32,3 +32,12 @@ class CreateTest(str, Enum):
 
 class CreateTestCallback(CallbackData, prefix='test'):
     choice: CreateTest
+
+
+class CreateTestCheck(str, Enum):
+    confirm = 'confirm'
+    re_create = 're_create'
+
+
+class CreateTestCheckCallback(CallbackData, prefix='check'):
+    choice: CreateTestCheck
