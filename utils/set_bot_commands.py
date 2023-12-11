@@ -6,11 +6,8 @@ async def set_default_commands(bot):
     await bot(
         SetMyCommands(
             commands=[
-                BotCommand(command='start', description='Foydalanishni boshlash'),
+                BotCommand(command='start', description='Restart qilish'),
                 BotCommand(command='help', description='Xizmat haqida'),
-                BotCommand(command='buy', description='Buyurtma berish'),
-                BotCommand(command='terms', description='Foydalanish shartlari'),
-                BotCommand(command='support', description='Biz bilan aloqa')
             ]
         )
     )
