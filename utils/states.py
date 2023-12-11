@@ -13,3 +13,4 @@ class MainMenu(StatesGroup):
 class CreateTest(StatesGroup):
     menu = State()
     name = State()
+    keys = State()
