@@ -6,11 +6,11 @@ from aiogram.filters.callback_data import CallbackData
 class BackMenu(str, Enum):
     back = 'back'
     back_main_menu = 'back_main_menu'
+    none = 'none'
 
 
 class BackMenuCallback(CallbackData, prefix='back'):
-    back: BackMenu
-    back_main_menu: BackMenu
+    choice: BackMenu
 
 
 class MainMenu(str, Enum):
