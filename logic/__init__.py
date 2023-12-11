@@ -1,5 +1,6 @@
 """This package is used for a bot logic implementation."""
-from .main import main
+from .create_test import create_test
+from .menu import menu
 from .start import start
 
-routers = (start, main)
+routers = (start, menu, create_test)
