@@ -12,7 +12,7 @@ create_test_menu = {
 create_tes_image = 'https://telegra.ph/file/d7addd466e88ada2429c8.jpg'
 
 back_buttons = {
-    'back_main_menu': '⬅️ Menyuga qaytish',
+    'back_main_menu': '🏘 Menyuga qaytish',
     'back': '🔙 Orqaga'
 }
 

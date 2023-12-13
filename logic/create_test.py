@@ -7,9 +7,9 @@ from data import data
 from logic.menu import main_menu_handler
 from root import bot
 from utils import states, keys_serializer
-from utils.callback_class import MainMenuCallback, CreateTestCallback, CreateTestCheckCallback
+from utils.callback_class import MainMenuCallback, CreateTestCallback, CreateTestCheckCallback, BackMenuCallback
 from utils.inlinekeyboardbuilder import inline_keyboard_builder
-from utils.requests import create_test_request
+from utils.requests import create_test_request, get_or_create_user
 
 create_test = Router()
 
@@ -36,6 +36,14 @@ async def create_test_menu_handler(call: CallbackQuery, state: FSMContext):
     )
 
 
+@create_test.callback_query(BackMenuCallback.filter(F.choice == 'back_main_menu'))
+async def back_main_menu_handler(call: CallbackQuery, state: FSMContext):
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+    await state.clear()
+    await state.set_state(states.MainMenu.main_menu)
+    await main_menu_handler(call.message)
+
+
 @create_test.callback_query(CreateTestCallback.filter(F.choice == 'back'))
 async def back_menu_handler(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
@@ -50,8 +58,10 @@ async def back_menu_handler(callback_query: CallbackQuery, state: FSMContext):
 @create_test.callback_query(CreateTestCallback.filter(F.choice == 'science'))
 async def since_menu_handler(call: CallbackQuery, state: FSMContext):
     context = {
-        'test_type': [f"<u>Test turi:</u> \n<pre>{data.create_test_menu[call.data.split(':')[1]]}</pre>",
-                      call.data.split(':')[1]]
+        'test_type': [
+            data.create_test_menu[call.data.split(':')[1]],
+            call.data.split(':')[1]
+        ]
     }
     await state.update_data(context)
     await bot.delete_message(call.message.chat.id, call.message.message_id)
@@ -63,7 +73,7 @@ async def since_menu_handler(call: CallbackQuery, state: FSMContext):
 @create_test.message(states.CreateTest.name)
 async def get_name_handler(msg: Message, state: FSMContext):
     context = {
-        'test_name': [f'<u>Fan nomi:</u> <pre><b>\n{msg.text.capitalize()}</b></pre>', msg.text.capitalize()]
+        'test_name': [msg.text.capitalize(), msg.text.capitalize()]
     }
     await state.update_data(context)
     await state.set_state(states.CreateTest.keys)
@@ -76,7 +86,7 @@ async def get_name_handler(msg: Message, state: FSMContext):
 @create_test.message(states.CreateTest.keys)
 async def get_keys_handler(msg: Message, state: FSMContext):
     context = {
-        'test_keys': [f'<u>Test kalitlari:</u> \n<pre>{msg.text.lower()}</pre>', msg.text.lower()]
+        'test_keys': [msg.text.lower(), msg.text.lower()]
     }
     await state.update_data(context)
     markup = inline_keyboard_builder(
@@ -86,16 +96,48 @@ async def get_keys_handler(msg: Message, state: FSMContext):
         [2]
     )
     get_data = await state.get_data()
-    text = (f"{get_data['test_type'][0]}\n"
-            f"{get_data['test_name'][0]}\n"
-            f"<u>Testlar soni:</u> <pre>{30}</pre>"
-            f"{get_data['test_keys'][0]}\n")
+    text = (f"<u>Test turi:</u>\n"
+            f"<pre>{get_data['test_type'][0]}</pre>\n"
+            f"<u>Fan nomi:</u>\n"
+            f"<pre>{get_data['test_name'][0]}</pre>\n"
+            f"<u>Testlar soni:</u>\n"
+            f"<pre>{len(keys_serializer(get_data['test_keys'][0]))}</pre>\n"
+            f"<u>Test kalitlari:</u>"
+            f"<pre>{get_data['test_keys'][0]}</pre>\n\n"
+            f"⚠️ Yuqoridagi ma'lumotlarni tasdiqlang.")
     await msg.answer(text, ParseMode.HTML, reply_markup=markup)
 
 
 @create_test.callback_query(CreateTestCheckCallback.filter(F.choice == 'confirm'))
 async def confirm_handler(call: CallbackQuery, state: FSMContext):
+    user = await get_or_create_user(call.message.chat)
     get_data = await state.get_data()
     get_data['test_size'] = len(keys_serializer(get_data['test_keys'][0]))
-    get_data['author'] = call.mess
-    await create_test_request(get_data)
+    get_data['author'] = user['id']
+    test = await create_test_request(get_data)
+    first_text = (f"✅ Test yaratildi.\n"
+                  f"Test kodi: {test['id']}\n"
+                  f"Savollar soni: {test['size']}\n\n"
+                  f"Quyidagi izohni o'quvchilarga yuborishingiz mumkin")
+    second_text = (f"〽️ Test boshlandi.\n\n"
+                   f"Test maullifi:\n"
+                   f"<a href='tg://user?id={user['telegram_id']}'>{user['first_name']} {user['last_name']}</a>\n\n"
+                   f"Fan: {test['name']}\n"
+                   f"Savollar soni: {test['size']}\n"
+                   f"Test kodi: {test['id']}\n\n"
+                   f"Javoblaringizni quyidagi ko'rinishlarda yuborishingiz mumkin:\n\n"
+                   f"<pre>7060#dbddabcd...\n</pre>"
+                   f"yoki\n"
+                   f"<pre>7060#1d2a3b4d5a...</pre>\n\n"
+                   f"⚠️ Yuqoridagi ko'rinishlardan boshqa ko'rinishlarda yuborilsa tekshirish sifati buziladi!")
+    markup = inline_keyboard_builder(
+        BackMenuCallback,
+        [data.back_buttons['back_main_menu']],
+        ['back_main_menu'],
+        [1]
+    )
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+    await call.message.answer(first_text, reply_markup=markup)
+    await call.message.answer(second_text, ParseMode.HTML)
+    await state.clear()
+    await state.set_state(states.MainMenu.main_menu)
