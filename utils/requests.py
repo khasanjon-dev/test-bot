@@ -27,3 +27,9 @@ async def create_test_request(data) -> dict:
     # http://127.0.0.1:8000/api/science/
     response = httpx.post(url, data=context)
     return response.json()
+
+# async def check_answer(keys: str):
+#     test_id, keys = keys.split('#')
+#     url = f'{base_url}/science/18/'
+#     keys = keys_serializer(keys)
+#     keys_api =

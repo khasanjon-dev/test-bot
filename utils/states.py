@@ -14,3 +14,9 @@ class CreateTest(StatesGroup):
     menu = State()
     name = State()
     keys = State()
+
+
+class CheckTest(StatesGroup):
+    code = State()
+    answers = State()
+

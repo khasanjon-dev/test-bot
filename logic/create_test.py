@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, InputMediaPhoto, Message
 from data import data
 from logic.menu import main_menu_handler
 from root import bot
-from utils import states, keys_serializer
+from utils import states, keys_serializer, date_change_format
 from utils.callback_class import MainMenuCallback, CreateTestCallback, CreateTestCheckCallback, BackMenuCallback
 from utils.inlinekeyboardbuilder import inline_keyboard_builder
 from utils.requests import create_test_request, get_or_create_user
@@ -15,7 +15,8 @@ create_test = Router()
 
 
 @create_test.callback_query(MainMenuCallback.filter(F.choice == 'create_test'))
-async def create_test_menu_handler(call: CallbackQuery, state: FSMContext):
+async def create_test_menu_handler(call: CallbackQuery, state: FSMContext, edit=True):
+    await state.clear()
     await state.set_state(states.CreateTest.menu)
     markup = inline_keyboard_builder(
         CreateTestCallback,
@@ -24,18 +25,22 @@ async def create_test_menu_handler(call: CallbackQuery, state: FSMContext):
         [2, 1]
     )
     text = 'Kerakli test turini tanlang'
-    await bot.edit_message_media(
-        InputMediaPhoto(
-            type=InputMediaType.PHOTO,
-            media=data.create_tes_image,
-            caption=text
-        ),
-        call.message.chat.id,
-        call.message.message_id,
-        reply_markup=markup
-    )
+    if edit:
+        await bot.edit_message_media(
+            InputMediaPhoto(
+                type=InputMediaType.PHOTO,
+                media=data.create_test_image,
+                caption=text
+            ),
+            call.message.chat.id,
+            call.message.message_id,
+            reply_markup=markup
+        )
+    else:
+        await call.message.answer_photo(data.create_test_image, caption=text, reply_markup=markup)
 
 
+@create_test.callback_query(CreateTestCheckCallback.filter(F.choice == 'back_main_menu'))
 @create_test.callback_query(BackMenuCallback.filter(F.choice == 'back_main_menu'))
 async def back_main_menu_handler(call: CallbackQuery, state: FSMContext):
     await bot.delete_message(call.message.chat.id, call.message.message_id)
@@ -46,7 +51,6 @@ async def back_main_menu_handler(call: CallbackQuery, state: FSMContext):
 
 @create_test.callback_query(CreateTestCallback.filter(F.choice == 'back'))
 async def back_menu_handler(callback_query: CallbackQuery, state: FSMContext):
-    await state.clear()
     await state.set_state(states.MainMenu.main_menu)
     await bot.delete_message(
         callback_query.message.chat.id,
@@ -104,7 +108,7 @@ async def get_keys_handler(msg: Message, state: FSMContext):
             f"<pre>{len(keys_serializer(get_data['test_keys'][0]))}</pre>\n"
             f"<u>Test kalitlari:</u>"
             f"<pre>{get_data['test_keys'][0]}</pre>\n\n"
-            f"⚠️ Yuqoridagi ma'lumotlarni tasdiqlang.")
+            f"⚠️ Yuqoridagi ma'lumotlarni tekshiring.")
     await msg.answer(text, ParseMode.HTML, reply_markup=markup)
 
 
@@ -115,20 +119,21 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext):
     get_data['test_size'] = len(keys_serializer(get_data['test_keys'][0]))
     get_data['author'] = user['id']
     test = await create_test_request(get_data)
-    first_text = (f"✅ Test yaratildi.\n"
+    test['created_at'] = date_change_format(test['created_at'])
+    first_text = (f"✅ Test yaratildi.  {test['created_at']}\n"
                   f"Test kodi: {test['id']}\n"
-                  f"Savollar soni: {test['size']}\n\n"
-                  f"Quyidagi izohni o'quvchilarga yuborishingiz mumkin")
-    second_text = (f"〽️ Test boshlandi.\n\n"
+                  f"Savollar soni: {test['size']} ta\n\n"
+                  f"Quyidagi izohni o'quvchilarga yuborishingiz mumkin 👇")
+    second_text = (f"⏳📚 Test boshlandi. {test['created_at']}\n\n"
                    f"Test maullifi:\n"
                    f"<a href='tg://user?id={user['telegram_id']}'>{user['first_name']} {user['last_name']}</a>\n\n"
-                   f"Fan: {test['name']}\n"
-                   f"Savollar soni: {test['size']}\n"
-                   f"Test kodi: {test['id']}\n\n"
+                   f"<b>Fan: {test['name']}\n"
+                   f"Savollar soni: {test['size']} ta\n"
+                   f"Test kodi: {test['id']}</b>\n\n"
                    f"Javoblaringizni quyidagi ko'rinishlarda yuborishingiz mumkin:\n\n"
-                   f"<pre>7060#dbddabcd...\n</pre>"
+                   f"<pre>test_kodi#dbddabcd...\n</pre>"
                    f"yoki\n"
-                   f"<pre>7060#1d2a3b4d5a...</pre>\n\n"
+                   f"<pre>test_kodi#1d2a3b4d5a...</pre>\n\n"
                    f"⚠️ Yuqoridagi ko'rinishlardan boshqa ko'rinishlarda yuborilsa tekshirish sifati buziladi!")
     markup = inline_keyboard_builder(
         BackMenuCallback,
@@ -141,3 +146,9 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext):
     await call.message.answer(second_text, ParseMode.HTML)
     await state.clear()
     await state.set_state(states.MainMenu.main_menu)
+
+
+@create_test.callback_query(CreateTestCheckCallback.filter(F.choice == 're_create'))
+async def re_create_test_handler(call: CallbackQuery, state: FSMContext):
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
+    await create_test_menu_handler(call, state, False)

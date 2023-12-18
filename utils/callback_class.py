@@ -37,6 +37,7 @@ class CreateTestCallback(CallbackData, prefix='test'):
 class CreateTestCheck(str, Enum):
     confirm = 'confirm'
     re_create = 're_create'
+    back_main_menu = 'back_main_menu'
 
 
 class CreateTestCheckCallback(CallbackData, prefix='check'):
