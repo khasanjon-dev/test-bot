@@ -24,7 +24,6 @@ async def create_test_request(data) -> dict:
         'keys': data['test_keys'],
         'author': data['author']
     }
-    # http://127.0.0.1:8000/api/science/
     response = httpx.post(url, data=context)
     return response.json()
 
